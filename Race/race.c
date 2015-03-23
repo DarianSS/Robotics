@@ -1,6 +1,5 @@
 // The turn function has to be improved.
 
-
 #include "math.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +73,7 @@ void turn(int angle) {
 		for (i = 0; i < 137; i++)
         	set_motors(50, -50);
     if (angle==90)
-    	for (i = 0; i < 49; i++)
+    	for (i = 0; i < 110; i++)
         	set_motors(30, -30);
     if (angle==-90)
     	for (i = 0; i < 68; i++) 
@@ -144,33 +143,9 @@ void drive_unit() {
 //////////////////////////////////////////
 
 ///////// Phase 1 //////////
-void maze_explorer() {
-	while (1){
-		get_readings();
-		mapper();
-	    //angle_change();
-	    setLinkedList(total_d_x, total_d_y);
-	    if (sideLeftDist>24) {
-	    	turn(-90); 
-	    	orientation=(orientation-1)%4;
-	    	printf("Turning -90\n");	
-	    }
-	    if (USDist>30) {
-			drive_unit();
-			printf("Moving ahead\n");
-		}
-		else  {
-			turn(90);
-			drive_unit();
-			orientation=(orientation+1)%4;
-			printf("Turning 90\n");
-		}
-	}
-}
-
 void mapper(int orientation) {
 	if (orientation==0) {
-		position=position+4;
+		position=position+4;               
 	}
 	if (orientation==1) {
 		position=position+1;
@@ -182,6 +157,34 @@ void mapper(int orientation) {
 		position=position-1;
 	}
 
+}
+
+void maze_explorer() {
+	while (1){
+		get_readings();
+		mapper(orientation);
+	    //angle_change();
+	    setLinkedList(total_d_x, total_d_y);
+	    if (sideLeftDist>24) {
+	    	turn(-90); 
+	    	orientation=(orientation-1)%4;
+	    	printf("Turning -90\n");	
+	    }
+	    else if (USDist>30) {
+			printf("Moving ahead\n");
+		}
+		else if (sideRightDist<24) {
+			turn(180);
+			orientation=(orientation+2)%4;
+			printf("Turning 180\n");
+		}
+		else {
+			turn(90);
+			orientation=(orientation+1)%4;
+			printf("Turning 90\n");
+		}
+		drive_unit();
+	}
 }
 //////////////////////////////////////////
 

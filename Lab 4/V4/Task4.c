@@ -57,18 +57,17 @@ void readings() {
 int new_speed() {
 	double new_gain;
 	double difference = DESIRED_FRONT_DIST - frontLeftDist;
-	if (difference * GAIN <= NEW_GAIN_MAX && difference * GAIN >= NEW_GAIN_MIN)
-	{
+	if (difference * GAIN <= NEW_GAIN_MAX && difference * GAIN >= NEW_GAIN_MIN) {
 		new_gain = 1 - difference * GAIN;
 	}
-	else if (difference * GAIN > NEW_GAIN_MAX)
-	{
-		new_gain = 1 - NEW_GAIN_MAX;
-	}
-	else
-	{
-		new_gain = 1 - NEW_GAIN_MIN;
-	}
+	else 
+		if (difference * GAIN > NEW_GAIN_MAX) {
+			new_gain = 1 - NEW_GAIN_MAX;
+		}
+		else
+		{
+			new_gain = 1 - NEW_GAIN_MIN;
+		}
 	return new_gain * SPEED;
 }
 
@@ -100,6 +99,7 @@ void move() {
 	while (1){
 		readings();
 	    angle_change();
+	    printf("%f | %f\n",total_d_x,total_d_y);
 	    setLinkedList(total_d_x, total_d_y);
 		if (frontRightDist < 28 && frontRightDist >= 19) {
 			set_motors(5,5);
@@ -116,16 +116,6 @@ void move() {
 		else {
 			set_motors(SPEED, new_speed());
 		}
-	}
-}
-
-void target_point() {
-	if (hypotenuse(total_d_y - current->y, total_d_x - current->x) > 25.0) {
-		target_point_x = current ->x;
-		target_point_y = current ->y;
-	}
-	else {
-		current = current -> previous;
 	}
 }
 

@@ -119,23 +119,21 @@ void turn(int degrees) {
 		target_angle = -359.8; 			 //
     if (degrees>=0) {
     	if (current_angle > target_angle) {
-			printf("Degrees > 0 & current_angle > target_angle.\n");
 			current_angle -= 360;
 		}
 	    while (current_angle < target_angle) {
 	    	angle_change();
-	    	printf("Target angle: %f | Current angle: %f\n",target_angle,current_angle);
+	    	//printf("Target angle: %f | Current angle: %f\n",target_angle,current_angle);
 	        set_motors(new_speed(target_angle,current_angle),-new_speed(target_angle,current_angle));
 	    }
 	}
 	else {
 		if (current_angle < target_angle) {
-			printf("Degrees < 0 & current_angle < target_angle.\n");
 			current_angle += 360;
 		}
 	    while (current_angle > target_angle) {
 	        angle_change();
-	        printf("Target angle: %f | Current angle: %f\n",target_angle,current_angle);
+	        //printf("Target angle: %f | Current angle: %f\n",target_angle,current_angle);
 	        set_motors(-new_speed(target_angle,current_angle),new_speed(target_angle,current_angle));
 	    }
 	}
@@ -242,13 +240,13 @@ void correction() {
 		if ((((USDist<21) || (USDist>23 && USDist<40) ) && sideLeftDist<30)       //US: 21-23 range
 			|| ((sideLeftDist<19) || (sideLeftDist>21 && sideLeftDist<30))) {	  //sideDists: 19-21 range
 				printf("Correction case 1:\n");
-				int delta_x=sideLeftDist+10-30;
-				int delta_y=USDist+8-30;
-				double alpha=atan2(-delta_x,-delta_y) * 180 / M_PI;
-				printf("alpha: %f || delta_x: %d | delta_y: %d\n", alpha, delta_x, delta_y);
+				int delta_x = sideLeftDist+10-30;
+				int delta_y = USDist+8-30;
+				double alpha = -atan2(delta_x, delta_y) * 180 / M_PI;
+				printf("alpha: %f || delta_x: %d | delta_y: %d || drive_dist: %f\n", alpha, delta_x, delta_y, sqrt(sqr(delta_x)+sqr(delta_y)));
 				turn(alpha);
 				//usleep(1000000);
-				drive(sqrt(sqr(delta_x)+sqr(delta_y)));
+				drive(sqrt(sqr(delta_x)+sqr(delta_y)) * CENTIMETER);
 				turn(0);
 				//usleep(1000000);
 
@@ -258,12 +256,12 @@ void correction() {
 			else if ((((USDist<21) || (USDist>23 && USDist<40)) && sideRightDist<30)
 				|| ((sideRightDist<19) || (sideRightDist>21 && sideRightDist<30))) {
 					printf("Correction case 2:\n");
-					int delta_x=30-(sideRightDist+10);
-					int delta_y=USDist+8-30;
-					double alpha=atan2(-delta_x,-delta_y) * 180 / M_PI;
+					int delta_x = 30-(sideRightDist+10);
+					int delta_y = USDist+8-30;
+					double alpha = -atan2(delta_x,delta_y) * 180 / M_PI;
 					printf("alpha: %f || delta_x: %d | delta_y: %d\n", alpha, delta_x, delta_y);
 					turn(alpha);
-					drive(sqrt(sqr(delta_x)+sqr(delta_y)));
+					drive(sqrt(sqr(delta_x)+sqr(delta_y)) * CENTIMETER);
 					turn(0);
 
 					printf("Post-correction: ");

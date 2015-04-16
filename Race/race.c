@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "picomms.h"
+#include <unistd.h>
 
 #define DESIRED_FRONT_DIST 32
 #define SPEED 30.0
@@ -14,7 +15,7 @@
 #define WHEEL_DIAMETER 9.5
 #define TICKS_IN_METER 1146
 #define CENTIMETER 12.06
-#define UNIT CENTIMETER*60-10
+#define UNIT CENTIMETER*60
 
 
 int ticks_left = 0, ticks_right = 0, orientation = 0, position = 0, stop = 0, i;
@@ -56,11 +57,11 @@ void setLinkedList(double total_d_x, double total_d_y) {
 //////////////////////////////////////////
 
 ///////// Helper functions //////////
-double sqr(double x){
+double sqr(double x) {
 	return x*x;
 }
 
-double hypotenuse(double x, double y){
+double hypotenuse(double x, double y) {
 	return sqrt(sqr(x) + sqr(y));
 }
 
@@ -68,7 +69,8 @@ void get_readings() {
 	get_front_ir_dists(&frontLeftDist, &frontRightDist);
 	get_side_ir_dists(&sideLeftDist, &sideRightDist);
 	USDist=get_us_dist();
-	//printf("US: %d\n", USDist);
+	printf("US: %d | ", USDist);
+	printf("Left side dist: %d | Right side dist: %d\n", sideLeftDist, sideRightDist);
 }
 
 void angle_change() {
@@ -84,7 +86,7 @@ void angle_change() {
 	total_d_x += d_m * cos(current_angle);
 	total_d_y += d_m * sin(current_angle);
 	current_angle += delta_angle;
-	current_angle=fmod(current_angle,360);
+	current_angle = fmod(current_angle,360);
 }
 
 int new_speed(double target, double current) {
@@ -102,28 +104,41 @@ int new_speed(double target, double current) {
 		{
 			new_gain = 1 - NEW_GAIN_MAX;
 		}
-	printf("new_gain: %f\n",new_gain);
+	//printf("new_gain: %f\n",new_gain);
 	return new_gain * SPEED;
 }
 
-void turn(int degrees){
-	double target_angle = orientation*90+degrees;
+void turn(int degrees) {
+	double target_angle = orientation*90+degrees;  //modulus of negative numbers will make it turn more...think of an if -- FIXED
+	if (target_angle>0)
+		target_angle = fmod(orientation*90+degrees,360); 
+	angle_change();
 	if (target_angle == 360)             //workaround the modulus limitation on line 87 (fmod)
-		target_angle = 359.8;
-	if (target_angle == -360)
-		target_angle = -359.8;
-    if (degrees>0)
-	    while (current_angle < target_angle){
+		target_angle = 359.8;			 //
+	if (target_angle == -360)			 //
+		target_angle = -359.8; 			 //
+    if (degrees>=0) {
+    	if (current_angle > target_angle) {
+			printf("Degrees > 0 & current_angle > target_angle.\n");
+			current_angle -= 360;
+		}
+	    while (current_angle < target_angle) {
 	    	angle_change();
 	    	printf("Target angle: %f | Current angle: %f\n",target_angle,current_angle);
 	        set_motors(new_speed(target_angle,current_angle),-new_speed(target_angle,current_angle));
 	    }
-	else 
-	    while (current_angle > target_angle){
+	}
+	else {
+		if (current_angle < target_angle) {
+			printf("Degrees < 0 & current_angle < target_angle.\n");
+			current_angle += 360;
+		}
+	    while (current_angle > target_angle) {
 	        angle_change();
 	        printf("Target angle: %f | Current angle: %f\n",target_angle,current_angle);
 	        set_motors(-new_speed(target_angle,current_angle),new_speed(target_angle,current_angle));
 	    }
+	}
     set_motors(0,0);
 }
 
@@ -141,15 +156,15 @@ void drive_first_unit() {
     }
 }
 
-void drive_unit() {
+void drive(double distance) {
     int initialleft,initialright,left=0,right=0;
     get_motor_encoders(&initialleft,&initialright);
     int speed=SPEED;
-    while ((left+right)/2<=(initialleft+initialright)/2+UNIT){
+    while ((left+right)/2<=(initialleft+initialright)/2+distance){
         get_motor_encoders(&left,&right);
         angle_change();
-        if ((initialleft+initialright)/2+UNIT-(left+right)/2<=SPEED/4)
-            speed=new_speed((initialleft+initialright)/2+UNIT,(left+right)/2);
+        if ((initialleft+initialright)/2+distance-(left+right)/2<=SPEED/4)
+            speed=new_speed((initialleft+initialright)/2+distance,(left+right)/2);
         set_motors(speed,speed);
         log_trail();
     }
@@ -222,78 +237,73 @@ void stopper() {
 	}
 }
 
-/*void correction() {
-	if (USDist>18 && 23>USDist) {
-		if (sideLeftDist>18 && 22>sideLeftDist) {
-			printf("Correction started, %f\n",180+orientation*90-current_angle);
-			if (180+orientation*90-current_angle < -1) {
-				while (current_angle > orientation*90) {
-					printf("Case 1: %f | %i\n",current_angle,orientation*90);
-					angle_change();
-					set_motors(5,-5);
-				}
+void correction() {
+	if (USDist<40 && (sideRightDist<30 || sideLeftDist<30)) {
+		if ((((USDist<21) || (USDist>23 && USDist<40) ) && sideLeftDist<30)       //US: 21-23 range
+			|| ((sideLeftDist<19) || (sideLeftDist>21 && sideLeftDist<30))) {	  //sideDists: 19-21 range
+				printf("Correction case 1:\n");
+				int delta_x=sideLeftDist+10-30;
+				int delta_y=USDist+8-30;
+				double alpha=atan2(-delta_x,-delta_y) * 180 / M_PI;
+				printf("alpha: %f || delta_x: %d | delta_y: %d\n", alpha, delta_x, delta_y);
+				turn(alpha);
+				//usleep(1000000);
+				drive(sqrt(sqr(delta_x)+sqr(delta_y)));
+				turn(0);
+				//usleep(1000000);
+
+				printf("Post-correction: ");
+				get_readings();
 			}
-			else if (180+orientation*90-current_angle > 1) {
-				while (current_angle < orientation*90) {
-					printf("Case 2: %f | %i\n",current_angle,orientation*90);
-					angle_change();
-					set_motors(-5,5);
-				}
-			}
-		}
-		else {
-			if (sideRightDist>18 && 22>sideRightDist) {
-				printf("Correction started, %f\n",180+orientation*90-current_angle);
-				if (180+orientation*90-current_angle < -1) {
-					while (current_angle > orientation*90) {
-						printf("Case 3: %f | %i\n",current_angle,orientation*90);
-						angle_change();
-						set_motors(-5,5);
-					}
-				}
-				else if (180+orientation*90-current_angle > 1) {
-					while (current_angle < orientation*90) {
-						printf("Case 4: %f | %i\n",current_angle,orientation*90);
-						angle_change();
-						set_motors(5,-5);
-					}
-				}
-			}
-		}
+			else if ((((USDist<21) || (USDist>23 && USDist<40)) && sideRightDist<30)
+				|| ((sideRightDist<19) || (sideRightDist>21 && sideRightDist<30))) {
+					printf("Correction case 2:\n");
+					int delta_x=30-(sideRightDist+10);
+					int delta_y=USDist+8-30;
+					double alpha=atan2(-delta_x,-delta_y) * 180 / M_PI;
+					printf("alpha: %f || delta_x: %d | delta_y: %d\n", alpha, delta_x, delta_y);
+					turn(alpha);
+					drive(sqrt(sqr(delta_x)+sqr(delta_y)));
+					turn(0);
+
+					printf("Post-correction: ");
+					get_readings();
+			}			
 	}
-}*/
+}
+
 
 void maze_explorer() {
-	while (1){
+	while (1) {
 		get_readings();
-		//correction();
+		correction();
 		mapper(orientation);
 		stopper();
 	    //setLinkedList(total_d_x, total_d_y);
 
 	    if (sideLeftDist>30) {
-	    	printf("Turning -90\n");
+	    	//printf("Turning -90\n");
 	    	turn(-90); 
-	    	printf("Finished Turning -90\n");
-	    	orientation=(orientation-1)%4;
+	    	//printf("Finished Turning -90\n");
+	    	orientation=(orientation+3)%4;    
 	    }
-	    else if (USDist<30) {
+	    else if (USDist<40) {
 	    	if (sideRightDist<30) {
-				printf("Turning 180\n");
+				//printf("Turning 180\n");
 				turn(180);
-				printf("Finished Turning 180\n");
+				//printf("Finished Turning 180\n");
 				orientation=(orientation+2)%4;
 			}
 			else {
-				printf("Turning 90\n");
+				//printf("Turning 90\n");
 				turn(90);
-				printf("Finished Turning 90\n");
+				//printf("Finished Turning 90\n");
 				orientation=(orientation+1)%4;
 			}
 		}
-		printf("Moving ahead\n");
-		drive_unit();
-		printf("Finished Moving ahead\n");
+		//printf("Moving ahead\n");
+		drive(UNIT-10);								//The -10 is for precision
+		//printf("Finished Moving ahead\n");
 	}
 }
 //////////////////////////////////////////

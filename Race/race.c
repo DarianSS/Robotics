@@ -1,20 +1,19 @@
 #include "math.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "picomms.h"
 #include <unistd.h>
+#include "picomms.h"
 
-#define DESIRED_FRONT_DIST 32
 #define SPEED 30.0
 
 #define GAIN 0.1           
 #define NEW_GAIN_MIN 0.3
 #define NEW_GAIN_MAX 0.9
 
+#define METER 1146
+#define CENTIMETER 12.06
 #define ROBOT_WIDTH 22.5
 #define WHEEL_DIAMETER 9.5
-#define TICKS_IN_METER 1146
-#define CENTIMETER 12.06
 #define UNIT CENTIMETER*60
 
 
@@ -38,7 +37,7 @@ coords *create(void) {
 	coordinateList = (coords *)malloc(sizeof(coords));
 	coordinateList->x = 0.0;
 	coordinateList->y = 0.0;
-	if(coordinateList == NULL)
+	if (coordinateList == NULL)
 	{
 		puts("Memory error");
 		exit(1);
@@ -51,8 +50,8 @@ void setLinkedList(double total_d_x, double total_d_y) {
 	new->previous = current;
 	current->next = new;
 	current = current->next;
-	current->x=total_d_x;
-	current->y=total_d_y;
+	current->x = total_d_x;
+	current->y = total_d_y;
 }
 //////////////////////////////////////////
 
@@ -104,20 +103,20 @@ int new_speed(double target, double current) {
 		{
 			new_gain = 1 - NEW_GAIN_MAX;
 		}
-	//printf("new_gain: %f\n",new_gain);
+	printf("new_gain: %f\n",new_gain);
 	return new_gain * SPEED;
 }
 
 void turn(int degrees) {
-	double target_angle = orientation*90+degrees;  //modulus of negative numbers will make it turn more...think of an if -- FIXED
-	if (target_angle>0)
+	double target_angle = orientation*90+degrees;  //modulus of negative numbers will make it turn more -- FIXED
+	if (target_angle > 0)
 		target_angle = fmod(orientation*90+degrees,360); 
 	angle_change();
 	if (target_angle == 360)             //workaround the modulus limitation on line 87 (fmod)
 		target_angle = 359.8;			 //
 	if (target_angle == -360)			 //
 		target_angle = -359.8; 			 //
-    if (degrees>=0) {
+    if (degrees >= 0) {
     	if (current_angle > target_angle) {
 			current_angle -= 360;
 		}
@@ -141,28 +140,28 @@ void turn(int degrees) {
 }
 
 void drive_first_unit() {
-    int initialleft,initialright,left=0,right=0;
+    int initialleft,initialright,left = 0,right = 0;
     get_motor_encoders(&initialleft,&initialright);
-    int speed=SPEED;
-    while ((left+right)/2<=(initialleft+initialright)/2+UNIT-18.75*CENTIMETER){
+    int speed = SPEED;
+    while ((left+right)/2 <= (initialleft+initialright)/2+UNIT-18.75*CENTIMETER){
         get_motor_encoders(&left,&right);
         angle_change();
         if ((initialleft+initialright)/2+UNIT-18.75*CENTIMETER-(left+right)/2<=SPEED/4)
-            speed=new_speed((initialleft+initialright)/2+UNIT-18.75*CENTIMETER,(left+right)/2);
+            speed = new_speed((initialleft+initialright)/2+UNIT-18.75*CENTIMETER,(left+right)/2);
         set_motors(speed,speed);
         log_trail();
     }
 }
 
 void drive(double distance) {
-    int initialleft,initialright,left=0,right=0;
+    int initialleft,initialright,left = 0,right = 0;
     get_motor_encoders(&initialleft,&initialright);
-    int speed=SPEED;
-    while ((left+right)/2<=(initialleft+initialright)/2+distance){
+    int speed = SPEED;
+    while ((left+right)/2 <= (initialleft+initialright)/2+distance){
         get_motor_encoders(&left,&right);
         angle_change();
-        if ((initialleft+initialright)/2+distance-(left+right)/2<=SPEED/4)
-            speed=new_speed((initialleft+initialright)/2+distance,(left+right)/2);
+        if ((initialleft+initialright)/2+distance-(left+right)/2 <= SPEED/4)
+            speed = new_speed((initialleft+initialright)/2+distance,(left+right)/2);
         set_motors(speed,speed);
         log_trail();
     }
@@ -206,28 +205,28 @@ void trace() {
 
 ///////// Phase 1 //////////
 void mapper(int orientation) {   //only updates position at this time
-	if (orientation==0) {
+	if (orientation == 0) {
 		if (position == 0)
-			position=position+1;
+			position = position+1;
 		else
-			position=position+4;               
+			position = position+4;               
 	}
-	if (orientation==1) {
-		position=position+1;
+	if (orientation == 1) {
+		position = position+1;
 	}
-	if (orientation==2) {
+	if (orientation == 2) {
 		if (position == 1)
-			position=position-1;
+			position = position-1;
 		else
-			position=position-4;
+			position = position-4;
 	}
-	if (orientation==3) {
-		position=position-1;
+	if (orientation == 3) {
+		position = position-1;
 	}	
 }
 
 void stopper() {
-	if (position == 0) {
+	if (position == 16) {
 		if (stop == 0)
 			stop++;
 		else
@@ -236,9 +235,9 @@ void stopper() {
 }
 
 void correction() {
-	if (USDist<40 && (sideRightDist<30 || sideLeftDist<30)) {
-		if ((((USDist<21) || (USDist>23 && USDist<40) ) && sideLeftDist<30)       //US: 21-23 range
-			|| ((sideLeftDist<19) || (sideLeftDist>21 && sideLeftDist<30))) {	  //sideDists: 19-21 range
+	if (USDist < 40 && (sideRightDist < 30 || sideLeftDist < 30)) {
+		if ((((USDist < 21) || (USDist > 23 && USDist < 40) ) && sideLeftDist < 30)       //US: 21-23 range
+			|| ((sideLeftDist < 19) || (sideLeftDist > 21 && sideLeftDist < 30))) {	      //sideDists: 19-21 range
 				printf("Correction case 1:\n");
 				int delta_x = sideLeftDist+10-30;
 				int delta_y = USDist+8-30;
@@ -253,8 +252,8 @@ void correction() {
 				printf("Post-correction: ");
 				get_readings();
 			}
-			else if ((((USDist<21) || (USDist>23 && USDist<40)) && sideRightDist<30)
-				|| ((sideRightDist<19) || (sideRightDist>21 && sideRightDist<30))) {
+			else if ((((USDist < 21) || (USDist > 23 && USDist < 40)) && sideRightDist < 30)
+				|| ((sideRightDist < 19) || (sideRightDist > 21 && sideRightDist < 30))) {
 					printf("Correction case 2:\n");
 					int delta_x = 30-(sideRightDist+10);
 					int delta_y = USDist+8-30;
@@ -279,24 +278,24 @@ void maze_explorer() {
 		stopper();
 	    //setLinkedList(total_d_x, total_d_y);
 
-	    if (sideLeftDist>30) {
+	    if (sideLeftDist > 30) {
 	    	//printf("Turning -90\n");
 	    	turn(-90); 
 	    	//printf("Finished Turning -90\n");
-	    	orientation=(orientation+3)%4;    
+	    	orientation = (orientation+3)%4;    
 	    }
-	    else if (USDist<40) {
-	    	if (sideRightDist<30) {
+	    else if (USDist < 40) {
+	    	if (sideRightDist < 30) {
 				//printf("Turning 180\n");
 				turn(180);
 				//printf("Finished Turning 180\n");
-				orientation=(orientation+2)%4;
+				orientation = (orientation+2)%4;
 			}
 			else {
 				//printf("Turning 90\n");
 				turn(90);
 				//printf("Finished Turning 90\n");
-				orientation=(orientation+1)%4;
+				orientation = (orientation+1)%4;
 			}
 		}
 		//printf("Moving ahead\n");

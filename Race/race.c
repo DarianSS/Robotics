@@ -140,11 +140,6 @@ void angle_change_tracing() {
 	delta_angle = (d_r - d_l) / ROBOT_WIDTH;
 	total_d_x += d_m * cos(final_angle);
 	total_d_y += d_m * sin(final_angle);
-	printf("total_d_x: %lf | total_d_y: %lf\n", total_d_x, total_d_y);
-	printf("d_m: %lf | sin(final_angle): %lf\n", d_m, sin(final_angle));
-	printf("d_r: %lf | cm_right: %lf | previous_cm_right: %lf | ticks_right: %d\n", d_r, cm_right, previous_cm_right, ticks_right);
-	printf("d_l: %lf | cm_left: %lf | previous_cm_left: %lf | ticks_left: %d\n", d_l, cm_left, previous_cm_left, ticks_left);
-	printf("\n");
 	final_angle += delta_angle;
 }
 
@@ -388,7 +383,6 @@ void maze_explorer() {
 		correction();
 		mapper(orientation);
 		if (stopper() == 0) break;
-	    //setLinkedList(total_d_x, total_d_y);
 
 	    if (sideLeftDist > 30) {
 	    	//printf("Turning -90\n");
@@ -446,7 +440,6 @@ void race() {
 		else {
 			target_point_x = current -> x;
 			target_point_y = current -> y;
-			printf("%lf | %lf\n", target_point_x, target_point_y);
 			drive_to_target();
 		}
 	}

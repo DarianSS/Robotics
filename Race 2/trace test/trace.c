@@ -103,7 +103,7 @@ void angle_change() {
 	delta_angle = (d_r - d_l) / ROBOT_WIDTH;
 	total_d_x += d_m * cos(final_angle);
 	total_d_y += d_m * sin(final_angle);
-	printf("total_d_x: %lf | total_d_y: %lf\n", total_d_x, total_d_y);
+	//printf("total_d_x: %lf | total_d_y: %lf\n", total_d_x, total_d_y);
 	final_angle += delta_angle;
 }
 
@@ -128,6 +128,8 @@ void race() {
 	while (current->next != NULL) {
 		if (hypotenuse(total_d_y - current ->y, total_d_x - current ->x) < 25.0) {
 			current = current -> next;
+			if ((current ->x == current -> y) && (current -> y == 200))
+				exit(0);
 		}
 		else {
 			target_point_x = current -> x;
@@ -234,55 +236,70 @@ void trace() {
 		}
 		else if (next - current == left[orientation]) {
 			if (orientation == 0) {
-				x -= 15; y += 15;
+				x -= 10; y += 10;
 				setLinkedList(x, y);
-				x -= 15; y += 15;
+				x -= 10; y += 10;
+				setLinkedList(x, y);
+				x -= 10; y += 10;
 				setLinkedList(x, y);
 			}
 			else if (orientation == 1) {
-				x += 15; y += 15;
+				x += 10; y += 10;
 				setLinkedList(x, y);
-				x += 15; y += 15;
+				x += 10; y += 10;
 				setLinkedList(x, y);
-
+				x += 10; y += 10;
+				setLinkedList(x, y);
 			}
 			else if (orientation == 2) {
-				x += 15; y -= 15;
+				x += 10; y -= 10;
 				setLinkedList(x, y);
-				x += 15; y -= 15;
+				x += 10; y -= 10;
+				setLinkedList(x, y);
+				x += 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			else {
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
+				setLinkedList(x, y);
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			orientation = (orientation+3)%4;
 		}
 		else {
 			if (orientation == 0) {
-				x += 15; y += 15;
+				x += 10; y += 10;
 				setLinkedList(x, y);
-				x += 15; y += 15;
+				x += 10; y += 10;
+				setLinkedList(x, y);
+				x += 10; y += 10;
 				setLinkedList(x, y);
 			}
 			else if (orientation == 1) {
-				x += 15; y -= 15;
+				x += 10; y -= 10;
 				setLinkedList(x, y);
-				x += 15; y -= 15;
+				x += 10; y -= 10;
+				setLinkedList(x, y);
+				x += 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			else if (orientation == 2) {
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
+				setLinkedList(x, y);
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			else {
-				x -= 15; y += 15;
+				x -= 10; y += 10;
 				setLinkedList(x, y);
-				x -= 15; y += 15;
+				x -= 10; y += 10;
+				setLinkedList(x, y);
+				x -= 10; y += 10;
 				setLinkedList(x, y);
 			}
 			orientation = (orientation+1)%4;
@@ -290,6 +307,8 @@ void trace() {
 		//printf ("%d\n", p_current -> square);
 		p_current = p_current -> next;
 	}
+	setLinkedList(180,225);
+	setLinkedList(200,200);
 }
 
 void printt() {
@@ -314,6 +333,7 @@ int main() {
 
 	readd();
 	trace();
+	printt();
 	race();
 
 	set_motors(0, 0);

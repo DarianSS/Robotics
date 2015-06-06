@@ -266,7 +266,7 @@ void mapper(int orientation) {
 				maze[position][position-1] = maze[position-1][position] = 1;
 			} 
 			if (sideLeftDist > 30) {
-				maze[position][position-1] = maze[position-1][position] = 1;
+				maze[position][position+1] = maze[position+1][position] = 1;
 			}
 		}
 	}
@@ -281,7 +281,7 @@ void mapper(int orientation) {
 		if (sideLeftDist > 30) {
 			maze[position][position-4] = maze[position-4][position] = 1;
 		}
-	}	
+	}
 }
 
 void floyd() {
@@ -436,10 +436,15 @@ void race() {
 	while (current -> next != NULL) {
 		if (hypotenuse(total_d_y - current ->y, total_d_x - current ->x) < 25.0) {
 			current = current -> next;
+			if ((current ->x == current -> y) && (current -> y == 200)) {
+				printf("Phase 2 completed.\n");
+				exit(0);
+			}
 		}
 		else {
 			target_point_x = current -> x;
 			target_point_y = current -> y;
+			//printf("%lf | %lf\n", target_point_x, target_point_y);
 			drive_to_target();
 		}
 	}
@@ -470,55 +475,70 @@ void trace() {
 		}
 		else if (next - current == left[orientation]) {
 			if (orientation == 0) {
-				x -= 15; y += 15;
+				x -= 10; y += 10;
 				setLinkedList(x, y);
-				x -= 15; y += 15;
+				x -= 10; y += 10;
+				setLinkedList(x, y);
+				x -= 10; y += 10;
 				setLinkedList(x, y);
 			}
 			else if (orientation == 1) {
-				x += 15; y += 15;
+				x += 10; y += 10;
 				setLinkedList(x, y);
-				x += 15; y += 15;
+				x += 10; y += 10;
 				setLinkedList(x, y);
-
+				x += 10; y += 10;
+				setLinkedList(x, y);
 			}
 			else if (orientation == 2) {
-				x += 15; y -= 15;
+				x += 10; y -= 10;
 				setLinkedList(x, y);
-				x += 15; y -= 15;
+				x += 10; y -= 10;
+				setLinkedList(x, y);
+				x += 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			else {
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
+				setLinkedList(x, y);
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			orientation = (orientation+3)%4;
 		}
 		else {
 			if (orientation == 0) {
-				x += 15; y += 15;
+				x += 10; y += 10;
 				setLinkedList(x, y);
-				x += 15; y += 15;
+				x += 10; y += 10;
+				setLinkedList(x, y);
+				x += 10; y += 10;
 				setLinkedList(x, y);
 			}
 			else if (orientation == 1) {
-				x += 15; y -= 15;
+				x += 10; y -= 10;
 				setLinkedList(x, y);
-				x += 15; y -= 15;
+				x += 10; y -= 10;
+				setLinkedList(x, y);
+				x += 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			else if (orientation == 2) {
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
-				x -= 15; y -= 15;
+				x -= 10; y -= 10;
+				setLinkedList(x, y);
+				x -= 10; y -= 10;
 				setLinkedList(x, y);
 			}
 			else {
-				x -= 15; y += 15;
+				x -= 10; y += 10;
 				setLinkedList(x, y);
-				x -= 15; y += 15;
+				x -= 10; y += 10;
+				setLinkedList(x, y);
+				x -= 10; y += 10;
 				setLinkedList(x, y);
 			}
 			orientation = (orientation+1)%4;
@@ -526,6 +546,8 @@ void trace() {
 		//printf ("%d\n", p_current -> square);
 		p_current = p_current -> next;
 	}
+	setLinkedList(180,225);
+	setLinkedList(200,200);
 }
 //////////////////////////////////////////
 
@@ -536,7 +558,6 @@ int main() {
 	floyd();
 	floyd_reconstruction(0,16);
 	trace();
-	printf("%lf\n", previous_cm_left);
 	race();
 
 	set_motors(0, 0);
